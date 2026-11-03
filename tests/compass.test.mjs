@@ -383,13 +383,16 @@ test('Android events: absolute accepted, relative ignored, screen angle on the t
   // landscape-primary, flat: top edge + 90
   win.dispatch('deviceorientationabsolute', android(90, 0, 0));
   assertHeading(compass.current().headingMag, 0);
-  // the deprecated window.orientation is used when screen.orientation is missing
+  // the deprecated window.orientation (-90 = landscape-secondary, top edge to
+  // the right) is used when screen.orientation is missing
   const legacy = fakeWindow({ legacyOrientation: -90 });
   const compass2 = createCompass({ win: legacy });
   compass2.start();
-  legacy.dispatch('deviceorientationabsolute', android(0, 40, 0));
+  legacy.dispatch('deviceorientationabsolute', android(0, 0, 0)); // flat, top edge north: screen-up is west
   assertHeading(compass2.current().headingMag, 270);
   assert.equal(compass2.current().screenAngle, 270);
+  legacy.dispatch('deviceorientationabsolute', android(270, 0, 90)); // upright, top edge east, camera north
+  assertHeading(compass2.current().headingMag, 0);
 });
 
 test('source preference: an iOS heading is kept over a later absolute event', () => {

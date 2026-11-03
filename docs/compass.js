@@ -169,7 +169,8 @@ export function circularMean(degreesArray) {
 export function circularStdDeg(degreesArray) {
   const { mean, R } = circularMean(degreesArray);
   if (mean == null) return R === 0 && (degreesArray || []).some(Number.isFinite) ? Infinity : null;
-  return Math.sqrt(-2 * Math.log(Math.max(R, Number.MIN_VALUE))) / DEG;
+  // Math.max(0, ...) turns the -0 of ln(1) into +0.
+  return Math.sqrt(Math.max(0, -2 * Math.log(Math.max(R, Number.MIN_VALUE)))) / DEG;
 }
 
 /**
