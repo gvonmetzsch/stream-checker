@@ -196,11 +196,13 @@ function chooseCode(c) {
   if (c.scene && c.scene.scene === 'not_water') return 'NOT_WATER';
   if (c.motion === 'insufficient') return 'INSUFFICIENT';
   if (c.motion === 'no_texture') return 'NO_TEXTURE';
-  // Wind ripples on a lake move in every direction at once, which looks like
-  // camera shake to the flow estimator; at a mapped lake that is still a lake.
+  // Wind ripples on a lake or at the coast move in every direction at once,
+  // which looks like camera shake to the flow estimator. Those verdicts are
+  // exempt whatever the camera did, so exemption wins over "hold still".
   const atLake = Boolean(c.lake) || sceneSaysLake(c);
-  if (c.motion === 'shaky' && !atLake) return 'SHAKY';
-  if (isTidal(c)) return 'TIDAL';
+  const tidal = isTidal(c);
+  if (c.motion === 'shaky' && !atLake && !tidal) return 'SHAKY';
+  if (tidal) return 'TIDAL';
   if (c.motion === 'still' || c.motion === 'shaky') {
     if (c.lake || sceneSaysLake(c)) return 'STILL_LAKE';
     if (c.expected) return 'STILL_STREAM';

@@ -539,13 +539,14 @@ test('precedence: motion gates beat tidal, still and flowing verdicts', () => {
   const coast = { lake: null, coast: { distanceM: 10 } };
   assert.equal(decide(mk({ motion: 'insufficient', water: coast })).code, 'INSUFFICIENT');
   assert.equal(decide(mk({ motion: 'no_texture', water: coast })).code, 'NO_TEXTURE');
-  assert.equal(decide(mk({ motion: 'shaky', water: coast })).code, 'SHAKY');
-  assert.equal(decide(mk({ motion: 'shaky', scene: OCEAN })).code, 'SHAKY');
+  assert.equal(decide(mk({ motion: 'shaky', expected: null, water: { lake: null, coast: null } })).code, 'SHAKY');
   assert.equal(decide(mk({ motion: 'no_texture', expected: TIDAL_CHANNEL })).code, 'NO_TEXTURE');
   assert.equal(decide(mk({ motion: 'insufficient', compass: { status: 'denied' }, flowBearing: null })).code, 'INSUFFICIENT');
-  // insufficient outranks no_texture outranks shaky only in the sense that each motion value is one gate;
-  // a still lake with a shaky camera is still SHAKY.
-  assert.equal(decide(mk({ motion: 'shaky', water: { lake: LAKE, coast: null } })).code, 'SHAKY');
+  // Exempt places win over "hold still": wind ripples on a lake or at the coast
+  // look like camera shake, and the verdict there does not depend on the motion.
+  assert.equal(decide(mk({ motion: 'shaky', water: coast })).code, 'TIDAL');
+  assert.equal(decide(mk({ motion: 'shaky', scene: OCEAN })).code, 'TIDAL');
+  assert.equal(decide(mk({ motion: 'shaky', water: { lake: LAKE, coast: null } })).code, 'STILL_LAKE');
 });
 
 test('precedence: tidal beats still and flowing; lake beats stream when still; compass beats map; map beats terrain', () => {
