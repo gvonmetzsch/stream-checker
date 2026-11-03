@@ -269,7 +269,7 @@ test('pure camera jitter (3 px, no net motion) -> still or shaky, never flowing'
     jitter: { amplitude: 3, frequency: 2, fps: 15, ratio: 1 },
   });
   const { result } = runClip(violent);
-  assert.ok(result.shake > FLOW.maxShake, `shake ${result.shake}`);
+  assert.ok(result.shakeRel > FLOW.maxShakeRel, `shakeRel ${result.shakeRel}`);
   assert.equal(classifyMotion(result), 'shaky');
 });
 
@@ -304,7 +304,7 @@ test('vectorAngleDeg: 0 = up, clockwise positive', () => {
 test('FlowAccumulator: circular statistics on known vectors', () => {
   const acc = new FlowAccumulator();
   assert.equal(acc.frames, 0);
-  assert.deepEqual(acc.result(), { angleDeg: null, speed: 0, consistency: 0, coverage: 0, shake: 0, frames: 0, meanDx: 0, meanDy: 0 });
+  assert.deepEqual(acc.result(), { angleDeg: null, speed: 0, consistency: 0, coverage: 0, shake: 0, shakeRel: 0, frames: 0, meanDx: 0, meanDy: 0 });
 
   acc.add({ dx: 1, dy: 0, accepted: 50, total: 100 }); // right
   acc.add({ dx: 0, dy: -1, accepted: 100, total: 100 }); // up
@@ -343,17 +343,18 @@ test('classifyMotion: each outcome and its precedence', () => {
   assert.equal(classifyMotion({ ...base, frames: 9 }), 'insufficient');
   assert.equal(classifyMotion({ ...base, frames: 10 }), 'flowing');
   assert.equal(classifyMotion({ ...base, coverage: FLOW.minCoverage - 0.01 }), 'no_texture');
-  assert.equal(classifyMotion({ ...base, shake: FLOW.maxShake + 0.1 }), 'shaky');
+  assert.equal(classifyMotion({ ...base, shakeRel: FLOW.maxShakeRel + 0.1 }), 'shaky');
   assert.equal(classifyMotion({ ...base, speed: FLOW.minSpeed - 0.01 }), 'still');
   assert.equal(classifyMotion({ ...base, consistency: FLOW.minConsistency - 0.01 }), 'still');
   assert.equal(classifyMotion({ ...base, angleDeg: null, speed: 0, consistency: 0 }), 'still');
-  // precedence: insufficient beats no_texture beats shaky beats still
+  // precedence: insufficient beats no_texture beats still (no motion) beats shaky beats still (no direction)
   assert.equal(classifyMotion({ ...base, frames: 2, coverage: 0, shake: 9, speed: 0 }), 'insufficient');
   assert.equal(classifyMotion({ ...base, coverage: 0, shake: 9, speed: 0 }), 'no_texture');
-  assert.equal(classifyMotion({ ...base, shake: 9, speed: 0 }), 'shaky');
+  assert.equal(classifyMotion({ ...base, shake: 9, speed: 0 }), 'still');
+  assert.equal(classifyMotion({ ...base, shake: 9, speed: 3, consistency: 0.1 }), 'shaky');
   // custom thresholds, partial objects allowed
   assert.equal(classifyMotion(base, { minSpeed: 3 }), 'still');
-  assert.equal(classifyMotion(base, { maxShake: 0.1 }), 'shaky');
+  assert.equal(classifyMotion(base, { maxShakeRel: 0.01 }), 'shaky');
   assert.equal(classifyMotion(null), 'insufficient');
   assert.equal(classifyMotion(undefined), 'insufficient');
 });

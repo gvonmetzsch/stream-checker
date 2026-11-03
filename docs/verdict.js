@@ -196,9 +196,12 @@ function chooseCode(c) {
   if (c.scene && c.scene.scene === 'not_water') return 'NOT_WATER';
   if (c.motion === 'insufficient') return 'INSUFFICIENT';
   if (c.motion === 'no_texture') return 'NO_TEXTURE';
-  if (c.motion === 'shaky') return 'SHAKY';
+  // Wind ripples on a lake move in every direction at once, which looks like
+  // camera shake to the flow estimator; at a mapped lake that is still a lake.
+  const atLake = Boolean(c.lake) || sceneSaysLake(c);
+  if (c.motion === 'shaky' && !atLake) return 'SHAKY';
   if (isTidal(c)) return 'TIDAL';
-  if (c.motion === 'still') {
+  if (c.motion === 'still' || c.motion === 'shaky') {
     if (c.lake || sceneSaysLake(c)) return 'STILL_LAKE';
     if (c.expected) return 'STILL_STREAM';
     return 'STILL_UNKNOWN';
@@ -432,7 +435,10 @@ const COPY = {
   },
 
   SHAKY(c) {
-    const shake = Number.isFinite(c.flow.shake) ? ` (shake ${c.flow.shake.toFixed(1)}, limit ${config.FLOW.maxShake})` : '';
+    const rel = Number.isFinite(c.flow.shakeRel)
+      ? c.flow.shakeRel
+      : (Number.isFinite(c.flow.shake) && c.flow.speed > 0 ? c.flow.shake / (c.flow.speed * c.flow.speed) : null);
+    const shake = Number.isFinite(rel) ? ` (shake score ${rel.toFixed(1)}, limit ${config.FLOW.maxShakeRel})` : '';
     return {
       headline: 'Hold still.',
       detail: `The camera moved more than the water${shake}. ` +

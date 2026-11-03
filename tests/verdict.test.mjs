@@ -478,7 +478,7 @@ test('NO_TEXTURE, SHAKY and INSUFFICIENT quote the number that tripped them', ()
   const shaky = decide(mk({ motion: 'shaky', flow: { ...FLOW, shake: 4.1 } }));
   assert.equal(shaky.code, 'SHAKY');
   assert.equal(shaky.headline, 'Hold still.');
-  assert.match(shaky.detail, /shake 4\.1, limit 2\.5/);
+  assert.match(shaky.detail, /shake score 2\.8, limit 0\.6/);
   assert.match(shaky.detail, /4 seconds/);
 
   const few = decide(mk({ motion: 'insufficient', flow: { ...FLOW, frames: 4 } }));

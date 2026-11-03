@@ -19,7 +19,8 @@ export const FLOW = {
   minSpeed: 0.3,    // px/frame below this counts as still water
   minConsistency: 0.5, // mean resultant length below this -> inconsistent / still
   minCoverage: 0.12,   // share of textured blocks below this -> can't see detail
-  maxShake: 2.5,       // frame-to-frame variance of the global vector above this -> hold still
+  maxShakeRel: 0.6,    // variance of the per-pair vectors divided by speed^2 above this -> hold still
+                       // (relative, so fast rivers with natural turbulence are not called shaky)
 };
 
 // Verdict geometry (degrees)

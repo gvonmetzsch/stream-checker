@@ -343,16 +343,22 @@ export class FlowAccumulator {
     return this._frames;
   }
 
-  /** Add one estimateFlow() result. Pairs with accepted === 0 count toward coverage only. */
-  add(result) {
+  /**
+   * Add one estimateFlow() result. Pairs with accepted === 0 count toward
+   * coverage only. `scale` normalises the vector to the nominal frame
+   * interval (nominalDt / actualDt) when frames arrive unevenly, so a pair
+   * spanning two camera frames does not look twice as fast as its neighbours.
+   */
+  add(result, scale = 1) {
     if (!result) return;
     const total = result.total > 0 ? result.total : 0;
     const accepted = result.accepted > 0 ? result.accepted : 0;
+    const k = Number.isFinite(scale) && scale > 0 ? scale : 1;
     this._frames++;
     this._coverageSum += total > 0 ? accepted / total : 0;
     if (accepted > 0 && Number.isFinite(result.dx) && Number.isFinite(result.dy)) {
-      this._dx.push(result.dx);
-      this._dy.push(result.dy);
+      this._dx.push(result.dx * k);
+      this._dy.push(result.dy * k);
     }
   }
 
@@ -361,7 +367,7 @@ export class FlowAccumulator {
     const n = this._dx.length;
     const coverage = frames > 0 ? this._coverageSum / frames : 0;
     if (n === 0) {
-      return { angleDeg: null, speed: 0, consistency: 0, coverage, shake: 0, frames, meanDx: 0, meanDy: 0 };
+      return { angleDeg: null, speed: 0, consistency: 0, coverage, shake: 0, shakeRel: 0, frames, meanDx: 0, meanDy: 0 };
     }
     let sx = 0;
     let sy = 0;
@@ -390,25 +396,41 @@ export class FlowAccumulator {
     const consistency = Math.min(1, Math.hypot(ux, uy) / n);
     // Var(v) = E|v|^2 - |E v|^2, clamped against rounding.
     const shake = Math.max(0, sumSq / n - (meanDx * meanDx + meanDy * meanDy));
+    const shakeRel = relativeShake(shake, speed);
     const angleDeg = meanDx === 0 && meanDy === 0 ? null : vectorAngleDeg(meanDx, meanDy);
-    return { angleDeg, speed, consistency, coverage, shake, frames, meanDx, meanDy };
+    return { angleDeg, speed, consistency, coverage, shake, shakeRel, frames, meanDx, meanDy };
   }
 }
 
 /**
+ * Shake relative to the motion itself: variance of the per-pair vectors over
+ * the squared mean magnitude. Steady flow of any speed stays small; an
+ * oscillating camera, whose vectors keep reversing, makes it large.
+ */
+export function relativeShake(shake, speed) {
+  if (!(shake > 0)) return 0;
+  if (!(speed > 0)) return Infinity;
+  return shake / (speed * speed);
+}
+
+/**
  * Turn an accumulator result into one of
- * 'flowing' | 'still' | 'no_texture' | 'shaky' | 'insufficient', checked in
- * that order of precedence (insufficient first). Thresholds default to
- * config.FLOW; a partial object overrides individual values.
+ * 'flowing' | 'still' | 'no_texture' | 'shaky' | 'insufficient'. Precedence:
+ * insufficient, then no_texture, then still (no motion at all), then shaky
+ * (motion dominated by oscillation), then still again (motion with no
+ * consistent direction), else flowing. Thresholds default to config.FLOW; a
+ * partial object overrides individual values.
  */
 export function classifyMotion(result, thresholds = FLOW) {
   const t = { ...FLOW, ...thresholds };
   if (!result || !(result.frames >= 10)) return 'insufficient';
   if (!(result.coverage >= t.minCoverage)) return 'no_texture';
-  if (result.shake > t.maxShake) return 'shaky';
-  if (result.angleDeg == null || !(result.speed >= t.minSpeed) || !(result.consistency >= t.minConsistency)) {
-    return 'still';
-  }
+  // Nothing moved: still, before any shake judgement (with no motion the
+  // relative shake score is just noise divided by noise).
+  if (result.angleDeg == null || !(result.speed >= t.minSpeed)) return 'still';
+  const rel = Number.isFinite(result.shakeRel) || result.shakeRel === Infinity ? result.shakeRel : relativeShake(result.shake, result.speed);
+  if (rel > t.maxShakeRel) return 'shaky';
+  if (!(result.consistency >= t.minConsistency)) return 'still';
   return 'flowing';
 }
 

@@ -875,9 +875,12 @@ function onVideoFrame(now) {
   syncOverlaySize();
   const run = state.run;
   if (!run || run.phase !== 'capturing') return;
-  if (now - run.lastProcessed < 1000 / config.TARGET_FPS - 1) return;
+  // Process at most TARGET_FPS pairs per second; the 0.7 factor keeps a source
+  // that already runs at TARGET_FPS from losing every other frame to timing
+  // jitter, while a 30 fps camera still settles on every second frame.
+  if (now - run.lastProcessed < (1000 / config.TARGET_FPS) * 0.7) return;
   run.lastProcessed = now;
-  processFrame(run);
+  processFrame(run, now);
 }
 
 function onTrackMute() {
@@ -1342,7 +1345,7 @@ function captureClip(run) {
   });
 }
 
-function processFrame(run) {
+function processFrame(run, now = performance.now()) {
   const video = el.video;
   if (!video.videoWidth || !video.videoHeight) return;
   const { ctx, w, h } = analysisCanvasFor(video);
@@ -1353,16 +1356,23 @@ function processFrame(run) {
   if (!run.sceneStarted) considerSceneFrame(run, gray, w, h);
   if (run.prevGray) {
     const r = estimateFlow(run.prevGray, gray, w, h, { returnVectors: true });
-    run.acc.add(r);
+    // Normalise the pair to the nominal frame interval: cameras drop and
+    // bunch frames, and a pair spanning two frames must not read as a burst
+    // of speed (which would inflate the shake score on steady water).
+    const nominal = 1000 / config.TARGET_FPS;
+    const dt = run.prevFrameAt > 0 ? now - run.prevFrameAt : nominal;
+    const scale = Math.min(4, Math.max(0.25, nominal / Math.max(1, dt)));
+    run.acc.add(r, scale);
     if (r.accepted > 0 && Number.isFinite(r.dx) && Number.isFinite(r.dy)) {
-      run.sumDx += r.dx;
-      run.sumDy += r.dy;
+      run.sumDx += r.dx * scale;
+      run.sumDy += r.dy * scale;
       run.pairs++;
     }
-    run.lastEstimate = { dx: r.dx, dy: r.dy, accepted: r.accepted, total: r.total };
+    run.lastEstimate = { dx: r.dx, dy: r.dy, accepted: r.accepted, total: r.total, dtMs: dt };
     drawOverlay(r.vectors, w, h, run);
   }
   run.prevGray = gray;
+  run.prevFrameAt = now;
 }
 
 function considerSceneFrame(run, gray, w, h) {
