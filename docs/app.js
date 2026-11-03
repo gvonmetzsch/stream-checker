@@ -1472,7 +1472,8 @@ function renderVerdict(verdict, ctx) {
   if (Number.isFinite(f.consistency)) stats.appendChild(statItem('consistency', f.consistency.toFixed(2)));
   if (Number.isFinite(f.speed)) stats.appendChild(statItem('speed', `${f.speed.toFixed(1)} px/f`));
   if (Number.isFinite(f.coverage)) stats.appendChild(statItem('coverage', `${Math.round(f.coverage * 100)}%`));
-  if (Number.isFinite(f.shake)) stats.appendChild(statItem('shake', f.shake.toFixed(1)));
+  if (Number.isFinite(f.shakeRel)) stats.appendChild(statItem('shake', f.shakeRel.toFixed(2)));
+  else if (Number.isFinite(f.shake)) stats.appendChild(statItem('shake', f.shake.toFixed(1)));
   if (Number.isFinite(f.frames)) stats.appendChild(statItem('pairs', String(f.frames)));
   if (ctx.win && Number.isFinite(ctx.win.samples)) stats.appendChild(statItem('heading n', `${ctx.win.samples}${Number.isFinite(ctx.win.R) ? ` R ${ctx.win.R.toFixed(2)}` : ''}`));
   if (ctx.expected && Number.isFinite(ctx.expected.distanceM)) stats.appendChild(statItem('channel', `${Math.round(ctx.expected.distanceM)} m`));
