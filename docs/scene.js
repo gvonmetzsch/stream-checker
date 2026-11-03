@@ -253,6 +253,8 @@ export async function classifyScene(jpegBlob, {
   }
 
   try {
+    // A check cancelled before the frame was ready never makes a request.
+    if (controller.signal.aborted) throw transportError(abortError());
     let res;
     try {
       res = await race(fetchImpl(req.url, {

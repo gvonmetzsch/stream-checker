@@ -380,7 +380,9 @@ test('classifyScene: a missing key fails before any network call', async () => {
 });
 
 test('classifyScene: no fetch available -> network error', async () => {
-  await rejectsWithCode(classifyScene(jpegBlob(), { apiKey: KEY, fetchImpl: undefined }), 'network');
+  // null (not undefined, which would select the default and reach the real network)
+  await rejectsWithCode(classifyScene(jpegBlob(), { apiKey: KEY, fetchImpl: null }), 'network');
+  await rejectsWithCode(classifyScene(jpegBlob(), { apiKey: KEY, fetchImpl: 'not a function' }), 'network');
 });
 
 // ---------------------------------------------------------------------------

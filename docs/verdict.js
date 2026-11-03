@@ -518,7 +518,8 @@ export function decide(input) {
     tone: TONES[code],
     headline: clampHeadline(copy.headline),
     detail: copy.detail,
-    measuredBearing: REPORTS_MEASURED.has(code) && c.compassOk ? c.flowBearing : null,
+    // A bearing is only a measurement of flow when the water actually flowed.
+    measuredBearing: REPORTS_MEASURED.has(code) && c.motion === 'flowing' && c.compassOk ? c.flowBearing : null,
     expectedBearing: REPORTS_EXPECTED.has(code) && hasExpectedBearing(c) ? normalizeDeg(c.expected.bearing) : null,
     delta: REPORTS_DELTA.has(code) ? deltaOf(c) : null,
     source: sourceOf(code, c),
