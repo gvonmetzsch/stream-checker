@@ -190,7 +190,14 @@ export function buildSourceLine({ verdict, expected, terrain, map, mapStatus, he
       parts.push(`compass: ${heading.reason}`);
     }
   }
-  return parts.join('. ') + '.';
+  return parts.map(sentence).join(' ');
+}
+
+/** Capitalise the first letter and end with a full stop. */
+function sentence(text) {
+  const t = String(text).trim();
+  if (!t) return '';
+  return t.charAt(0).toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? '' : '.');
 }
 
 /** Compact history entry from a verdict. */
@@ -964,10 +971,11 @@ function drawOverlay(vectors, w, h, run) {
   const ctx = canvas.getContext('2d');
   const sx = canvas.width / w;
   const sy = canvas.height / h;
-  // Adaptive gain: the typical block vector draws at about 7 % of the frame
-  // width whatever the flow speed, so slow creeks are as readable as torrents.
+  // Adaptive gain: the typical block vector draws at about 5 % of the frame
+  // width (one grid stride) whatever the flow speed, so slow creeks are as
+  // readable as torrents and neighbouring arrows do not pile up.
   const typical = run && run.pairs > 0 ? Math.hypot(run.sumDx, run.sumDy) / run.pairs : 0;
-  const gain = Math.min(40, Math.max(4, (0.07 * w) / Math.max(typical, 0.3)));
+  const gain = Math.min(40, Math.max(4, (0.05 * w) / Math.max(typical, 0.3)));
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (Array.isArray(vectors) && vectors.length) {

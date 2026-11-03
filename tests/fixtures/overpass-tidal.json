@@ -1,0 +1,67 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.7 1bd3fe9f",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-02T08:15:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 128335100,
+      "bounds": {
+        "minlat": 45.4613227,
+        "minlon": -122.5979256,
+        "maxlat": 45.4627398,
+        "maxlon": -122.5975693
+      },
+      "geometry": [
+        {
+          "lat": 45.4613227,
+          "lon": -122.5975693
+        },
+        {
+          "lat": 45.4620312,
+          "lon": -122.5977475
+        },
+        {
+          "lat": 45.4627398,
+          "lon": -122.5979256
+        }
+      ],
+      "tags": {
+        "waterway": "tidal_channel",
+        "name": "Demo Slough"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335101,
+      "bounds": {
+        "minlat": 45.4604948,
+        "minlon": -122.5992627,
+        "maxlat": 45.4631928,
+        "maxlon": -122.5992627
+      },
+      "geometry": [
+        {
+          "lat": 45.4604948,
+          "lon": -122.5992627
+        },
+        {
+          "lat": 45.4618438,
+          "lon": -122.5992627
+        },
+        {
+          "lat": 45.4631928,
+          "lon": -122.5992627
+        }
+      ],
+      "tags": {
+        "waterway": "river",
+        "name": "Demo River",
+        "tidal": "yes"
+      }
+    }
+  ]
+}

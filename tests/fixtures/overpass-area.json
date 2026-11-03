@@ -1,0 +1,262 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.7 1bd3fe9f",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-02T08:15:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 128334761,
+      "bounds": {
+        "minlat": 45.4615379,
+        "minlon": -122.6022975,
+        "maxlat": 45.4640062,
+        "maxlon": -122.5926284
+      },
+      "geometry": [
+        {
+          "lat": 45.4640062,
+          "lon": -122.6022975
+        },
+        {
+          "lat": 45.4633911,
+          "lon": -122.5998877
+        },
+        {
+          "lat": 45.4624266,
+          "lon": -122.5987338
+        },
+        {
+          "lat": 45.461996,
+          "lon": -122.5970469
+        },
+        {
+          "lat": 45.4622146,
+          "lon": -122.5952791
+        },
+        {
+          "lat": 45.4615379,
+          "lon": -122.5926284
+        }
+      ],
+      "tags": {
+        "waterway": "stream",
+        "name": "Johnson Creek",
+        "name:en": "Johnson Creek",
+        "intermittent": "no",
+        "source": "survey"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128334790,
+      "bounds": {
+        "minlat": 45.4605245,
+        "minlon": -122.6003336,
+        "maxlat": 45.4614473,
+        "maxlon": -122.596719
+      },
+      "geometry": [
+        {
+          "lat": 45.4614473,
+          "lon": -122.6003336
+        },
+        {
+          "lat": 45.4609859,
+          "lon": -122.5985262
+        },
+        {
+          "lat": 45.4605245,
+          "lon": -122.596719
+        }
+      ],
+      "tags": {
+        "waterway": "ditch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335001,
+      "bounds": {
+        "minlat": 45.4707773,
+        "minlon": -122.5847925,
+        "maxlat": 45.4722985,
+        "maxlon": -122.584003
+      },
+      "geometry": [
+        {
+          "lat": 45.4722985,
+          "lon": -122.584003
+        },
+        {
+          "lat": 45.4715379,
+          "lon": -122.5843978
+        },
+        {
+          "lat": 45.4707773,
+          "lon": -122.5847925
+        }
+      ],
+      "tags": {
+        "waterway": "canal",
+        "name": "Mill Race Canal",
+        "usage": "irrigation"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335201,
+      "bounds": {
+        "minlat": 45.4528269,
+        "minlon": -122.5982564,
+        "maxlat": 45.4531867,
+        "maxlon": -122.5977436
+      },
+      "geometry": [
+        {
+          "lat": 45.4531867,
+          "lon": -122.598
+        },
+        {
+          "lat": 45.453134,
+          "lon": -122.5978187
+        },
+        {
+          "lat": 45.4530068,
+          "lon": -122.5977436
+        },
+        {
+          "lat": 45.4528796,
+          "lon": -122.5978187
+        },
+        {
+          "lat": 45.4528269,
+          "lon": -122.598
+        },
+        {
+          "lat": 45.4528796,
+          "lon": -122.5981813
+        },
+        {
+          "lat": 45.4530068,
+          "lon": -122.5982564
+        },
+        {
+          "lat": 45.453134,
+          "lon": -122.5981813
+        },
+        {
+          "lat": 45.4531867,
+          "lon": -122.598
+        }
+      ],
+      "tags": {
+        "natural": "water",
+        "water": "pond",
+        "name": "Far Pond"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335300,
+      "bounds": {
+        "minlat": 45.4594619,
+        "minlon": -122.6249598,
+        "maxlat": 45.4645324,
+        "maxlon": -122.6223285
+      },
+      "geometry": [
+        {
+          "lat": 45.4594619,
+          "lon": -122.6249598
+        },
+        {
+          "lat": 45.4619971,
+          "lon": -122.6236442
+        },
+        {
+          "lat": 45.4645324,
+          "lon": -122.6223285
+        }
+      ],
+      "tags": {
+        "natural": "coastline",
+        "source": "PGS"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 12345,
+      "bounds": {
+        "minlat": 45.4617302,
+        "minlon": -122.6008368,
+        "maxlat": 45.4635288,
+        "maxlon": -122.5982724
+      },
+      "members": [
+        {
+          "type": "way",
+          "ref": 128335400,
+          "role": "outer",
+          "geometry": [
+            {
+              "lat": 45.4635288,
+              "lon": -122.5995546
+            },
+            {
+              "lat": 45.4632654,
+              "lon": -122.5986479
+            },
+            {
+              "lat": 45.4626295,
+              "lon": -122.5982724
+            },
+            {
+              "lat": 45.4619936,
+              "lon": -122.598648
+            },
+            {
+              "lat": 45.4617302,
+              "lon": -122.5995546
+            }
+          ]
+        },
+        {
+          "type": "way",
+          "ref": 128335401,
+          "role": "outer",
+          "geometry": [
+            {
+              "lat": 45.4617302,
+              "lon": -122.5995546
+            },
+            {
+              "lat": 45.4619936,
+              "lon": -122.6004613
+            },
+            {
+              "lat": 45.4626295,
+              "lon": -122.6008368
+            },
+            {
+              "lat": 45.4632654,
+              "lon": -122.6004613
+            },
+            {
+              "lat": 45.4635288,
+              "lon": -122.5995546
+            }
+          ]
+        }
+      ],
+      "tags": {
+        "type": "multipolygon",
+        "natural": "water",
+        "water": "lake",
+        "name": "Demo Lake"
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.7 1bd3fe9f",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-02T08:15:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "relation",
+      "id": 12345,
+      "center": {
+        "lat": 45.4621574,
+        "lon": -122.5983887
+      },
+      "tags": {
+        "type": "multipolygon",
+        "natural": "water",
+        "water": "lake",
+        "name": "Demo Lake"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335200,
+      "center": {
+        "lat": 45.4617527,
+        "lon": -122.5973892
+      },
+      "tags": {
+        "natural": "water",
+        "water": "pond",
+        "name": "Duck Pond"
+      }
+    },
+    {
+      "type": "area",
+      "id": 3600012345,
+      "tags": {
+        "natural": "water",
+        "water": "lake",
+        "name": "Demo Lake"
+      }
+    }
+  ]
+}

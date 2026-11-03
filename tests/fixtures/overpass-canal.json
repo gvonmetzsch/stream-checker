@@ -1,0 +1,39 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.7 1bd3fe9f",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-02T08:15:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 128335001,
+      "bounds": {
+        "minlat": 45.4613317,
+        "minlon": -122.5987561,
+        "maxlat": 45.4628529,
+        "maxlon": -122.5979668
+      },
+      "geometry": [
+        {
+          "lat": 45.4628529,
+          "lon": -122.5979668
+        },
+        {
+          "lat": 45.4620923,
+          "lon": -122.5983615
+        },
+        {
+          "lat": 45.4613317,
+          "lon": -122.5987561
+        }
+      ],
+      "tags": {
+        "waterway": "canal",
+        "name": "Mill Race Canal",
+        "usage": "irrigation"
+      }
+    }
+  ]
+}

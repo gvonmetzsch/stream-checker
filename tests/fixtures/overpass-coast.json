@@ -1,0 +1,34 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.7 1bd3fe9f",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-02T08:15:04Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 128335300,
+      "center": {
+        "lat": 45.4619999,
+        "lon": -122.5964613
+      },
+      "tags": {
+        "natural": "coastline",
+        "source": "PGS"
+      }
+    },
+    {
+      "type": "way",
+      "id": 128335301,
+      "center": {
+        "lat": 45.4619999,
+        "lon": -122.5947944
+      },
+      "tags": {
+        "natural": "coastline",
+        "source": "PGS"
+      }
+    }
+  ]
+}
