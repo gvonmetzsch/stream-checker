@@ -146,11 +146,13 @@ test('nearestSegment finds the closest segment of a bent polyline, in node order
   nearPoint(seg.closest, destination(P, 35, 40 * Math.SQRT1_2), 0.05, 'foot of the perpendicular');
   near(haversineM(P, seg.closest), seg.distanceM, 0.01);
 
-  // Reversing the node order reverses the bearing but nothing else.
+  // Reversing the node order reverses the bearing but nothing else (the
+  // initial bearings of a 60 m great-circle arc differ from exact opposites
+  // by the meridian convergence, well under a hundredth of a degree).
   const rev = nearestSegment(P, line.slice().reverse());
   assert.equal(rev.index, 1);
   near(rev.distanceM, seg.distanceM, 1e-6);
-  near(absAngleDiff(rev.bearing, seg.bearing + 180), 0, 1e-6);
+  near(absAngleDiff(rev.bearing, seg.bearing + 180), 0, 0.01);
 });
 
 test('nearestSegment clamps to the segment ends', () => {
