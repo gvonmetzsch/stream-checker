@@ -106,7 +106,7 @@ async function newPage(browser, s, baseUrl) {
     isMobile: true,
     hasTouch: true,
     colorScheme: s.colorScheme || 'light',
-    permissions: s.location === null ? [] : ['geolocation'],
+    permissions: ['accelerometer', 'gyroscope', 'magnetometer', ...(s.location === null ? [] : ['geolocation'])],
     geolocation: s.location === null ? undefined : { latitude: POINT.lat, longitude: POINT.lon, accuracy: 8 },
     serviceWorkers: 'block',
   });

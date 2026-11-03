@@ -363,7 +363,11 @@ export function createCompass(opts = {}) {
       } catch (err) {
         return 'denied'; // NotAllowedError: no gesture, or the user said no earlier
       }
-      return result === 'granted' ? 'granted' : 'denied';
+      // 'prompt' (Chromium with the setting still at Allow, or an http origin)
+      // means no decision was made and events may still flow, so only an
+      // explicit refusal counts as denied; the app judges the compass by
+      // whether samples actually arrive.
+      return result === 'denied' ? 'denied' : 'granted';
     },
 
     /** Listen on both event names; the handler keeps the best source (idempotent). */
