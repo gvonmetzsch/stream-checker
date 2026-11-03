@@ -267,7 +267,9 @@ export function parseOverpass(json) {
 
     if (el.type === 'way' && tags.natural === 'coastline') {
       const geometry = cleanGeometry(el.geometry);
-      const entry = { id: el.id, tags, center: centerOf(el, geometry) };
+      // Coastline ways are open polylines (land on the left, water on the
+      // right), never rings: `kind` marks them so distance code never closes them.
+      const entry = { id: el.id, kind: 'coastline', tags, center: centerOf(el, geometry) };
       if (geometry && geometry.length) entry.geometry = geometry;
       out.coastlines.push(entry);
     }
@@ -333,6 +335,7 @@ export async function fetchFeatures(point, { fetchImpl = fetch, hosts = config.O
     if (signal) signal.addEventListener('abort', onAbort, { once: true });
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response;
+    let bodyText = '';
     try {
       response = await fetchImpl(host, {
         method: 'POST',
@@ -340,9 +343,14 @@ export async function fetchFeatures(point, { fetchImpl = fetch, hosts = config.O
         body,
         signal: controller.signal,
       });
+      // The timer stays armed until the body has been read: a server that
+      // sends headers and then stalls must not hang the check.
+      if (response.status !== 429) {
+        bodyText = typeof response.text === 'function' ? await response.text() : JSON.stringify(await response.json());
+      }
     } catch (err) {
       if (signal && signal.aborted) throw new OverpassError('aborted', 'map lookup cancelled', attempts);
-      attempts.push({ host, error: controller.signal.aborted ? `timeout after ${timeoutMs} ms` : String((err && err.message) || err) });
+      attempts.push({ host, status: response ? response.status : undefined, error: controller.signal.aborted ? `timeout after ${timeoutMs} ms` : String((err && err.message) || err) });
       rateLimitedOnly = false;
       continue;
     } finally {
@@ -357,8 +365,7 @@ export async function fetchFeatures(point, { fetchImpl = fetch, hosts = config.O
       continue;
     }
     if (status === 400) {
-      const text = await response.text().catch(() => '');
-      throw new OverpassError('bad_query', `Overpass rejected the query (400): ${excerpt(text)}`, [...attempts, { host, status }]);
+      throw new OverpassError('bad_query', `Overpass rejected the query (400): ${excerpt(bodyText)}`, [...attempts, { host, status }]);
     }
     if (!response.ok) {
       attempts.push({ host, status });
@@ -368,7 +375,7 @@ export async function fetchFeatures(point, { fetchImpl = fetch, hosts = config.O
 
     let json;
     try {
-      json = await response.json();
+      json = JSON.parse(bodyText);
     } catch (err) {
       attempts.push({ host, status, error: `unreadable JSON: ${String((err && err.message) || err)}` });
       rateLimitedOnly = false;
@@ -449,6 +456,7 @@ export function areaContains(area, point) {
  */
 export function featureDistance(feature, point) {
   if (!feature) return null;
+  if (feature.kind === 'coastline' || feature.polyline === true) return coastlineDistance(feature, point);
   const rings = Array.isArray(feature.rings) && feature.rings.length ? feature.rings : feature.geometry ? [feature.geometry] : [];
   if (rings.length) {
     if (areaContains(feature, point)) return { distanceM: 0, contains: true, approx: false };
@@ -458,6 +466,31 @@ export function featureDistance(feature, point) {
   }
   if (isCoord(feature.center)) return { distanceM: haversineM(point, feature.center), contains: false, approx: true };
   return null;
+}
+
+/**
+ * Distance to a coastline way, which is always an open polyline: a coast
+ * kilometres away must never read as "inside" because its ends happen to
+ * enclose the point when joined.
+ */
+export function coastlineDistance(feature, point) {
+  if (!feature) return null;
+  if (Array.isArray(feature.geometry) && feature.geometry.length) {
+    return { distanceM: distanceToPolyline(point, feature.geometry), contains: false, approx: false };
+  }
+  if (isCoord(feature.center)) return { distanceM: haversineM(point, feature.center), contains: false, approx: true };
+  return null;
+}
+
+/**
+ * natural=water areas whose water=* value describes flowing water. These are
+ * riverbanks and channels drawn as polygons, not lakes, so they never produce
+ * the "lakes don't go anywhere" verdict.
+ */
+export const FLOWING_WATER_KINDS = new Set(['river', 'canal', 'stream', 'ditch', 'drain', 'moat', 'lock', 'harbour', 'wastewater', 'fish_pass', 'rapids', 'tidal_channel']);
+
+export function isLakeLike(kind) {
+  return !FLOWING_WATER_KINDS.has(String(kind || 'water').toLowerCase());
 }
 
 /**
@@ -475,13 +508,14 @@ export function nearbyWater(features, point, radii = config.RADIUS) {
   if (!features) return out;
   const r = { ...config.RADIUS, ...(radii || {}) };
 
-  const containing = Array.isArray(features.containing) ? features.containing : [];
+  const containing = (Array.isArray(features.containing) ? features.containing : []).filter((c) => c && isLakeLike(c.kind));
   if (containing.length) {
     const c = containing[0];
     out.lake = { name: c.name || null, kind: c.kind || 'water', distanceM: 0, contains: true };
   } else {
     let best = null;
     for (const a of Array.isArray(features.waterAreas) ? features.waterAreas : []) {
+      if (!a || !isLakeLike(a.kind)) continue;
       const d = featureDistance(a, point);
       if (!d) continue;
       if (!d.contains && !d.approx && d.distanceM > r.water) continue;
@@ -492,7 +526,7 @@ export function nearbyWater(features, point, radii = config.RADIUS) {
 
   let coast = null;
   for (const c of Array.isArray(features.coastlines) ? features.coastlines : []) {
-    const d = featureDistance(c, point);
+    const d = coastlineDistance(c, point);
     if (!d) continue;
     if (!d.approx && d.distanceM > r.coast) continue;
     if (!coast || d.distanceM < coast.distanceM) coast = { distanceM: d.distanceM };

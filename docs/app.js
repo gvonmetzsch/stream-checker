@@ -88,7 +88,12 @@ export function headingReadout(sample, { status = null, recent = [], waitedMs = 
     return { value: '— — —', hint: 'reading compass…', kind: 'waiting' };
   }
   const value = formatHeading(sample.headingMag);
-  if (sample.tiltOk === false) return { value, hint: 'tilt the phone down toward the water', kind: 'tilt' };
+  if (sample.tiltOk === false) {
+    // Flat (camera straight down) and upright (camera level) need opposite corrections.
+    const pitch = Math.abs(Number.isFinite(sample.pitch) ? sample.pitch : Number.isFinite(sample.cameraPitch) ? sample.cameraPitch : 90);
+    const hint = pitch < config.COMPASS.pitchMin ? 'lift the top of the phone a little' : 'tilt the phone down toward the water';
+    return { value, hint, kind: 'tilt' };
+  }
   let jumpy = false;
   if (recent.length >= 5) {
     const { R } = circularMean(recent);
@@ -155,9 +160,42 @@ export function compassStatusFrom(permission, win, cfg = config.COMPASS) {
 }
 
 /** The source line under the verdict card. */
-export function buildSourceLine({ verdict, expected, terrain, map, mapStatus, heading }) {
+export function buildSourceLine({ verdict, expected, terrain, map, mapStatus, heading, water = null, scene = null }) {
   const parts = [];
-  if (verdict.source === 'osm' && expected) {
+  const code = verdict.code || '';
+  const lake = water && water.lake;
+  const coast = water && water.coast;
+  const mapWas = () => (mapStatus === 'live' || mapStatus === 'cache' ? mapAgeText(map) : mapStatus === 'skipped' ? 'no location fix, so the map was not consulted' : 'map unavailable');
+  if (code === 'STILL_LAKE') {
+    if (lake) {
+      const name = lake.name || `unnamed ${lake.kind || 'water'}`;
+      const where = lake.contains ? 'you are on it' : Number.isFinite(lake.distanceM) ? `${Math.round(lake.distanceM)} m from the shore` : null;
+      parts.push([name, `OSM ${lake.kind || 'water'}`, where].filter(Boolean).join(' · '));
+      parts.push(mapAgeText(map));
+    } else if (scene && scene.label) {
+      parts.push(`Claude saw ${scene.label} · no mapped lake within ${config.RADIUS.water} m · ${mapWas()}`);
+    } else {
+      parts.push(`Still water · ${mapWas()}`);
+    }
+  } else if (code === 'TIDAL') {
+    if (expected && expected.exempt) {
+      parts.push(`${expected.name || `unnamed ${expected.kind || 'waterway'}`} · OSM ${expected.kind || 'waterway'} (tidal) · ${mapAgeText(map)}`);
+    } else if (coast) {
+      parts.push(`OSM coastline${Number.isFinite(coast.distanceM) ? ` · ${Math.round(coast.distanceM)} m away` : ''} · ${mapAgeText(map)}`);
+    } else if (scene && scene.label) {
+      parts.push(`Claude saw ${scene.label} · ${mapWas()}`);
+    } else {
+      parts.push(`Tidal water · ${mapWas()}`);
+    }
+  } else if (code === 'NOT_WATER') {
+    parts.push(`Claude saw ${scene && scene.label ? scene.label : 'something that is not water'} · ${mapWas()}`);
+  } else if (code === 'NO_TEXTURE' || code === 'SHAKY' || code === 'INSUFFICIENT') {
+    parts.push(`No verdict from this clip · ${mapWas()}`);
+  } else if (code === 'NO_COMPASS') {
+    parts.push(expected ? `${expected.name || `unnamed ${expected.kind || 'waterway'}`} · OSM ${expected.kind || 'waterway'} · ${mapAgeText(map)}` : `No compass · ${mapWas()}`);
+  } else if (code === 'STILL_UNKNOWN') {
+    parts.push(scene && scene.label ? `Claude saw ${scene.label} · no mapped water nearby · ${mapWas()}` : `No mapped water body nearby · ${mapWas()}`);
+  } else if (verdict.source === 'osm' && expected) {
     const name = expected.name || `unnamed ${expected.kind || 'waterway'}`;
     const kind = expected.kind ? `OSM ${expected.kind}` : 'OSM waterway';
     const dist = Number.isFinite(expected.distanceM) ? `${Math.round(expected.distanceM)} m from the mapped channel` : null;
@@ -299,6 +337,7 @@ const state = {
   settings: { ...DEFAULT_SETTINGS },
   fetchOverride: null,
   stream: null,
+  acquiring: null, // in-flight acquireCamera() promise, shared so two callers never open two cameras
   demoSource: null,
   stalled: false,
   loopGen: 0,
@@ -751,6 +790,7 @@ function streamLive(stream) {
 
 /** Resolve with a live stream, acquiring one if needed. getUserMedia is called synchronously. */
 function ensureCamera() {
+  if (state.acquiring) return state.acquiring;
   if (state.stream && streamLive(state.stream) && !state.stalled) return Promise.resolve(state.stream);
   if (state.stream && !streamLive(state.stream)) dropStream();
   if (state.stalled) {
@@ -760,7 +800,21 @@ function ensureCamera() {
   return acquireCamera();
 }
 
-async function acquireCamera() {
+/**
+ * One acquisition at a time: a Check tap while the visibility handler is
+ * already re-acquiring the camera must reuse that request, or two streams get
+ * opened and the first one leaks with its listeners still attached.
+ */
+function acquireCamera() {
+  if (state.acquiring) return state.acquiring;
+  const p = acquireCameraNow().finally(() => {
+    if (state.acquiring === p) state.acquiring = null;
+  });
+  state.acquiring = p;
+  return p;
+}
+
+async function acquireCameraNow() {
   let stream;
   if (state.demo) {
     if (state.demoSource) state.demoSource.stop();
@@ -799,6 +853,16 @@ function dropStream() {
 }
 
 function attachStream(stream) {
+  if (state.stream && state.stream !== stream) {
+    // Never leave a previous stream open: stop its tracks before replacing it.
+    for (const track of state.stream.getTracks()) {
+      try {
+        track.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
   state.stream = stream;
   state.stalled = false;
   el.video.srcObject = stream;
@@ -1253,7 +1317,9 @@ async function continueCheck(run, compassPermission, cameraReady) {
 
   const input = {
     motion,
-    flow: flowResult,
+    // angleDeg carries the "camera looks sideways" correction so copy that
+    // names a screen direction matches what the user sees.
+    flow: { ...flowResult, angleDeg: imageAngle },
     flowBearing,
     compass: { status: compassInfo.status, headingTrue },
     location,
@@ -1269,6 +1335,7 @@ async function continueCheck(run, compassPermission, cameraReady) {
 
   renderVerdict(verdict, {
     expected,
+    water,
     terrain,
     map,
     mapStatus,
@@ -1354,8 +1421,22 @@ function processFrame(run, now = performance.now()) {
   const gray = toGray(img);
   run.frames++;
   if (!run.sceneStarted) considerSceneFrame(run, gray, w, h);
+  if (run.prevGray && run.prevGray.length !== w * h) {
+    // The frame size changed mid-run (rotation, track reconfiguration):
+    // start a fresh pair instead of comparing frames of different shapes.
+    run.prevGray = null;
+  }
   if (run.prevGray) {
-    const r = estimateFlow(run.prevGray, gray, w, h, { returnVectors: true });
+    let r;
+    try {
+      r = estimateFlow(run.prevGray, gray, w, h, { returnVectors: true });
+    } catch (err) {
+      // Never let one bad pair kill the frame loop (that would end as a false "camera stalled").
+      console.warn('[stream-checker] flow pair skipped', err);
+      run.prevGray = gray;
+      run.prevFrameAt = now;
+      return;
+    }
     // Normalise the pair to the nominal frame interval: cameras drop and
     // bunch frames, and a pair spanning two frames must not read as a burst
     // of speed (which would inflate the shake score on steady water).
@@ -1485,6 +1566,8 @@ function renderVerdict(verdict, ctx) {
     map: ctx.map,
     mapStatus: ctx.mapStatus,
     heading: ctx.heading,
+    water: ctx.water,
+    scene: ctx.scene,
   });
 
   const notice = el['scene-notice'];

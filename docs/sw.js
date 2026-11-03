@@ -128,17 +128,31 @@ async function shellNetworkFirst(req) {
   return fetch(req);
 }
 
+// Fonts: same race as the shell, with a shorter wait. A stalled connection
+// serves the cached stylesheet or font after FONT_TIMEOUT_MS when one exists.
+const FONT_TIMEOUT_MS = 3000;
+
 async function networkFirst(req) {
   const cache = await caches.open(CACHE_NAME);
-  try {
-    const res = await fetch(req);
+  const cached = await cache.match(req);
+  const fetched = fetch(req).then((res) => {
     // Google Fonts responses are opaque for no-cors stylesheet links; caching
     // them is still fine, they are only ever replayed for the same request.
     if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
     return res;
+  });
+  if (!cached) return fetched;
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(cached), FONT_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([fetched, timeout]);
   } catch (err) {
-    const cached = await cache.match(req);
-    if (cached) return cached;
-    throw err;
+    return cached;
+  } finally {
+    clearTimeout(timer);
+    // The losing fetch keeps running (and refreshes the cache); swallow its failure.
+    fetched.catch(() => {});
   }
 }

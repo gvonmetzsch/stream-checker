@@ -11,7 +11,7 @@
 
 import * as config from './config.js';
 import { haversineM, distanceToPolyline } from './geo.js';
-import { buildAreaQuery, fetchFeatures, featureDistance } from './waterways.js';
+import { buildAreaQuery, fetchFeatures, featureDistance, coastlineDistance } from './waterways.js';
 
 const STORE = 'areas';
 // An area download is a bigger query than the live lookup; give it the same
@@ -60,7 +60,7 @@ export function filterFeatures(all, point, radii = config.RADIUS) {
   }
 
   for (const c of Array.isArray(all.coastlines) ? all.coastlines : []) {
-    const d = featureDistance(c, point);
+    const d = coastlineDistance(c, point); // open polylines, never rings
     if (d && d.distanceM <= r.coast) out.coastlines.push(c);
   }
   return out;
@@ -206,8 +206,12 @@ export async function cachedFeatures(point) {
     if (typeof console !== 'undefined') console.warn('[offline] could not read saved areas', err);
     return null;
   }
+  // A saved area only "covers" a point when every lookup radius around that
+  // point still lies inside the saved circle; at the edge the data would be
+  // silently incomplete and a verdict could miss the real nearest stream.
+  const margin = Math.max(config.RADIUS.waterway, config.RADIUS.water, config.RADIUS.coast);
   const covering = (Array.isArray(records) ? records : []).filter(
-    (r) => r && isCoord(r.center) && Number.isFinite(r.radiusM) && r.features && haversineM(point, r.center) <= r.radiusM,
+    (r) => r && isCoord(r.center) && Number.isFinite(r.radiusM) && r.features && haversineM(point, r.center) + margin <= r.radiusM,
   );
   if (!covering.length) return null;
   covering.sort((a, b) => savedAtMs(b) - savedAtMs(a));

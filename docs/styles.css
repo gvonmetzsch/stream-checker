@@ -10,7 +10,7 @@
   --surface-2: #dde2db;
   --ink: #1a2321;
   --ink-2: #475350;
-  --ink-3: #6b7774;
+  --ink-3: #566260;
   --line: #c7cfc8;
   --line-strong: #a9b4ad;
 
@@ -21,13 +21,13 @@
   --on-accent: #f4fbfb;
 
   /* Semantic tones, kept separate from the accent: moss green / safety orange. */
-  --good: #557a2b;
+  --good: #3f611b;
   --on-good: #f6fbef;
   --good-soft: #dfe9d0;
-  --bad: #c2410c;
+  --bad: #a8340a;
   --on-bad: #fff4ee;
   --bad-soft: #fbe0d2;
-  --warn: #9a6b0c;
+  --warn: #7d5508;
   --on-warn: #fff8e6;
   --warn-soft: #f5e9c4;
   --neutral: #4f5a57;
@@ -621,7 +621,6 @@ button {
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  opacity: 0.85;
 }
 
 .verdict-headline {
@@ -643,13 +642,14 @@ button {
 
 .bearings {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 0 0 12px;
   padding: 0;
 }
 
 .bearing {
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.16);
@@ -660,17 +660,26 @@ button {
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.85;
 }
 
 .bearing dd {
   margin: 4px 0 0;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 22px;
+  font-size: clamp(16px, 5.6vw, 22px);
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .bearing {
+    padding: 10px 8px;
+  }
+
+  .bearing dd {
+    font-size: 16px;
+  }
 }
 
 .stats {
@@ -682,7 +691,6 @@ button {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-  opacity: 0.92;
 }
 
 .stats:empty {
@@ -696,7 +704,6 @@ button {
 }
 
 .stats dt {
-  opacity: 0.75;
 }
 
 .stats dd {
@@ -708,13 +715,11 @@ button {
   margin: 0 0 6px;
   font-size: 13px;
   line-height: 1.4;
-  opacity: 0.92;
 }
 
 .scene-notice {
   margin: 0 0 8px;
   font-size: 13px;
-  opacity: 0.9;
 }
 
 .verdict-actions {
@@ -1051,7 +1056,12 @@ button {
 
 .field input {
   font-family: var(--font-mono);
-  font-size: 14px;
+}
+
+/* 16px minimum: iOS Safari zooms the page when a smaller field is focused */
+.field input,
+.field select {
+  font-size: 16px;
 }
 
 .field-row {

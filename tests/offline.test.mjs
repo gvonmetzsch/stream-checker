@@ -252,8 +252,12 @@ test('saveArea, cachedFeatures, savedAreas and clearSaved round-trip through Ind
   const inLake = await cachedFeatures(LAKE_CENTRE);
   assert.deepEqual(names(inLake.containing), ['Demo Lake']);
 
+  // Coverage keeps a margin of the largest lookup radius inside the saved
+  // circle: a point on the rim would get silently incomplete data.
+  const margin = Math.max(config.RADIUS.waterway, config.RADIUS.water, config.RADIUS.coast);
   assert.equal(await cachedFeatures(destination(P, 0, config.RADIUS.offline + 50)), null, 'just outside the saved circle');
-  assert.ok(await cachedFeatures(destination(P, 0, config.RADIUS.offline - 50)), 'just inside the saved circle');
+  assert.equal(await cachedFeatures(destination(P, 0, config.RADIUS.offline - 50)), null, 'on the rim: lookup radii would leave the saved circle');
+  assert.ok(await cachedFeatures(destination(P, 0, config.RADIUS.offline - margin - 50)), 'well inside the saved circle');
 
   await clearSaved();
   assert.deepEqual(await savedAreas(), []);
