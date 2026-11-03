@@ -476,7 +476,7 @@ function registerServiceWorker(params) {
   if (params.get('nosw') === '1') return;
   // Relative path and no explicit scope: on GitHub Pages this resolves to
   // /stream-checker/sw.js with scope /stream-checker/, locally to /sw.js.
-  navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('[sw]', err));
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch((err) => console.warn('[sw]', err));
 }
 
 // ---------------------------------------------------------------------------

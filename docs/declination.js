@@ -407,6 +407,8 @@ export function trueToMagnetic(headingTrue, lat, lon, date = new Date()) {
 }
 
 function normalize360(deg) {
-  const r = deg % 360;
-  return r < 0 ? r + 360 : r === 0 ? 0 : r; // "r === 0" folds -0 into 0
+  let r = deg % 360;
+  if (r < 0) r += 360;          // a tiny negative (-1e-15) lands on 360.0 here...
+  if (r >= 360 || r === 0) r = 0; // ...so fold 360 (and -0) back to 0
+  return r;
 }
