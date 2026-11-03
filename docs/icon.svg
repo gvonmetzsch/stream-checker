@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Stream Checker: a stream, the direction it goes, and a tick. Reads at 48 px. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15606b"/>
+      <stop offset="1" stop-color="#0b3a42"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- stream: two bold waves, the lower one quieter -->
+  <path d="M72 304c40 0 40-52 80-52s40 52 80 52 40-52 80-52 40 52 80 52 40-52 48-52"
+        fill="none" stroke="#9fe0e6" stroke-width="40" stroke-linecap="round"/>
+  <path d="M72 392c40 0 40-52 80-52s40 52 80 52 40-52 80-52 40 52 80 52 40-52 48-52"
+        fill="none" stroke="#9fe0e6" stroke-width="40" stroke-linecap="round" opacity=".5"/>
+  <!-- direction: a bold arrow heading up and to the right -->
+  <path d="M232 212 356 88M356 88h-96M356 88v96" fill="none" stroke="#ffffff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- check mark on moss green -->
+  <circle cx="396" cy="400" r="84" fill="#6f9a3a" stroke="#0b3a42" stroke-width="18"/>
+  <path d="M356 402l28 28 56-60" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

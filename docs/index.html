@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stream Checker</title>
+  <meta name="description" content="Film a creek for four seconds. Stream Checker measures which way the water moves, reads the compass, and checks it against the mapped channel. A joke, built properly.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9ece6">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141a1c">
+  <meta name="application-name" content="Stream Checker">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Stream Checker">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <path d="M8 31c5 0 5-6 10-6s5 6 10 6 5-6 10-6" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M8 40c5 0 5-6 10-6s5 6 10 6 5-6 10-6" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+        <path d="M24 20V7m0 0-6 6m6-6 6 6" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1 class="brand-name">Stream Checker</h1>
+      <span id="demo-badge" class="badge" hidden>Demo</span>
+    </div>
+    <nav class="topbar-actions" aria-label="App">
+      <button id="help-button" class="icon-button" type="button" aria-haspopup="dialog" aria-controls="help">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.7v.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
+        <span>Help</span>
+      </button>
+      <button id="settings-button" class="icon-button" type="button" aria-haspopup="dialog" aria-controls="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h10m4 0h2M4 12h3m4 0h9M4 17h12m4 0h0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="17" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="state" data-state="idle" data-camera="off">
+    <section class="viewport" aria-label="Camera">
+      <div class="viewport-frame">
+        <!-- The preview is never display:none while frames are drawn: a hidden
+             preview paints black on iPhone. The idle card simply sits on top. -->
+        <video id="video" class="media" autoplay muted playsinline></video>
+        <canvas id="overlay" class="media" aria-hidden="true"></canvas>
+
+        <div class="viewport-idle" aria-hidden="false">
+          <svg class="idle-art" viewBox="0 0 160 110" aria-hidden="true" focusable="false">
+            <path d="M8 74c16 0 16-16 32-16s16 16 32 16 16-16 32-16 16 16 32 16 16-16 16-16" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+            <path d="M8 96c16 0 16-16 32-16s16 16 32 16 16-16 32-16 16 16 32 16 16-16 16-16" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+            <path d="M100 44 128 16m0 0h-20m20 0v20" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="idle-lead">Film moving water for four seconds.</p>
+          <p class="idle-sub">Stream Checker measures which way it flows, reads the compass, and compares that with the mapped channel.</p>
+          <ol class="idle-steps">
+            <li><span><b>Hold</b> the phone upright and tilt it down at the water.</span></li>
+            <li><span><b>Tap Check</b> and keep still for 4 s.</span></li>
+            <li><span><b>Read</b> the verdict. Argue with friends.</span></li>
+          </ol>
+        </div>
+
+        <div id="heading-readout" class="readout" aria-live="off">
+          <span class="readout-value">—</span>
+          <span class="readout-hint"></span>
+        </div>
+
+        <div id="countdown" class="countdown" role="timer" aria-live="off" style="--p:0"><span class="countdown-value"></span></div>
+
+        <button id="cancel-button" class="cancel" type="button">Cancel</button>
+      </div>
+    </section>
+
+    <p id="status" class="status" aria-live="polite">Point the camera at moving water, then tap Check.</p>
+
+    <div class="controls">
+      <button id="check-button" class="check" type="button">
+        <span class="check-label">Check</span>
+        <span class="check-sub">flow direction vs. the map</span>
+      </button>
+      <a id="demo-link" class="demo-link" href="?demo=1">No stream nearby? Try the demo</a>
+    </div>
+
+    <section id="verdict" class="verdict" data-code="" data-tone="" hidden aria-live="polite">
+      <p class="verdict-kicker">Verdict</p>
+      <h2 id="verdict-headline" class="verdict-headline"></h2>
+      <p id="verdict-detail" class="verdict-detail"></p>
+      <dl class="bearings">
+        <div class="bearing">
+          <dt>Measured flow</dt>
+          <dd id="measured-bearing" class="mono">—</dd>
+        </div>
+        <div class="bearing">
+          <dt>Expected flow</dt>
+          <dd id="expected-bearing" class="mono">—</dd>
+        </div>
+      </dl>
+      <dl id="verdict-stats" class="stats"></dl>
+      <p id="verdict-source" class="verdict-source"></p>
+      <p id="scene-notice" class="scene-notice" hidden></p>
+      <div class="verdict-actions">
+        <button id="share-button" class="button" type="button">Share</button>
+        <button id="again-button" class="button button-quiet" type="button">Check again</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="offline-title">
+      <div class="panel-head">
+        <h2 id="offline-title" class="panel-title">Offline map data</h2>
+      </div>
+      <p class="panel-text">Save every mapped stream, river, lake and coastline within 5 km, so the verdict works where there is no signal.</p>
+      <button id="save-area-button" class="button" type="button">Save streams near me</button>
+      <p id="save-area-status" class="panel-status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="history-title">
+      <div class="panel-head">
+        <h2 id="history-title" class="panel-title">Field log</h2>
+        <span class="panel-meta" id="history-count"></span>
+      </div>
+      <ol id="history" class="history">
+        <li class="history-empty">No checks yet.</li>
+      </ol>
+    </section>
+
+    <pre id="debug" class="debug" hidden></pre>
+  </main>
+
+  <footer class="footer">
+    <span class="footer-version">Stream Checker <span id="app-version" class="mono"></span></span>
+    <span class="footer-attr">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
+  </footer>
+
+  <dialog id="settings" class="sheet" aria-labelledby="settings-title">
+    <form method="dialog" class="sheet-body">
+      <div class="sheet-head">
+        <h2 id="settings-title" class="sheet-title">Settings</h2>
+        <button id="settings-close" class="icon-button" type="submit" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <fieldset class="field-group">
+        <legend>Claude scene check</legend>
+        <p class="field-help">Optional. With a key, each check sends one small frame (about 512 px) straight from this phone to <span class="mono">api.anthropic.com</span> and Claude says whether it is flowing water, a lake, a puddle, or not water at all. The key is stored only on this phone and never leaves it except for that one request. Without it, the app assumes it is looking at water.</p>
+        <label class="field">
+          <span class="field-label">Anthropic API key</span>
+          <input id="api-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" placeholder="sk-ant-…">
+        </label>
+        <label class="field">
+          <span class="field-label">Model</span>
+          <select id="model-select">
+            <option value="claude-opus-5-5">Claude Opus 5.5 (default, about a cent a check)</option>
+            <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+          </select>
+        </label>
+        <label class="switch">
+          <input id="scene-toggle" type="checkbox">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span class="switch-label">Run the scene check (needs a key)</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="field-group">
+        <legend>Camera</legend>
+        <label class="switch">
+          <input id="sideways-toggle" type="checkbox">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span class="switch-label">Camera looks sideways <small>(rotates the preview and the flow mapping by 90°; the fix for a known iOS bug)</small></span>
+        </label>
+      </fieldset>
+
+      <fieldset class="field-group">
+        <legend>Data on this phone</legend>
+        <p class="field-help">The field log and settings live in this browser's local storage. Saved map areas live in its database. Nothing is sent anywhere else.</p>
+        <div class="field-row">
+          <button id="clear-history-button" class="button button-quiet" type="button">Clear field log</button>
+          <button id="clear-saved-button" class="button button-quiet" type="button">Delete saved map data</button>
+        </div>
+      </fieldset>
+    </form>
+  </dialog>
+
+  <dialog id="help" class="sheet" aria-labelledby="help-title">
+    <form method="dialog" class="sheet-body">
+      <div class="sheet-head">
+        <h2 id="help-title" class="sheet-title">Help</h2>
+        <button id="help-close" class="icon-button" type="submit" aria-label="Close help">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <h3>How to hold the phone</h3>
+      <ul class="help-list">
+        <li>Portrait, with the top of the phone pointing across the water in the direction you are looking.</li>
+        <li>Tilt it down at moving water, roughly 30 to 60 degrees. Flat or upright poses confuse the compass.</li>
+        <li>Hold still for the whole 4 seconds. Panning looks like flow.</li>
+        <li>Fill the frame with the water surface. Avoid glare, reflections and the bank.</li>
+      </ul>
+
+      <h3>What the verdicts mean</h3>
+      <dl class="help-verdicts">
+        <dt>Right direction</dt><dd>The water moves within 60° of the mapped flow of the nearest stream, river or canal. OpenStreetMap draws waterways downstream, so the map knows which way is down.</dd>
+        <dt>Wrong way</dt><dd>The measured flow is 120° or more from the mapped direction. Check the hold, the compass, and whether you filmed an eddy, then enjoy the moment.</dd>
+        <dt>Sideways</dt><dd>Between the two: usually the phone pointed along the bank rather than across the current.</dd>
+        <dt>Terrain estimate</dt><dd>No mapped waterway within 200 m, so the app checked whether the ground drops along the measured bearing using 90 m elevation data. Coarse.</dd>
+        <dt>Unverified</dt><dd>The flow was measured but the map could not be reached and no saved data covers this spot.</dd>
+        <dt>Lake, puddle, tidal, still</dt><dd>Still water and tidal water are exempt. Lakes do not go anywhere.</dd>
+        <dt>Not water</dt><dd>Only the optional Claude scene check can tell. Without it the app assumes water.</dd>
+        <dt>Can't see detail, hold still, no compass</dt><dd>Too little texture (glare, flat water, too far), too much camera motion, or no usable heading. Try again.</dd>
+      </dl>
+
+      <h3>Readouts</h3>
+      <p>Bearings are true compass bearings with 16-point cardinal abbreviations. <b>Consistency</b> is the mean resultant length of the per-frame flow vectors (1.0 is perfectly steady). <b>Coverage</b> is the share of the frame with enough texture to track. The channel distance is the perpendicular distance to the mapped line.</p>
+
+      <h3>Limits</h3>
+      <ul class="help-list">
+        <li>Wind ripples, cloud reflections and standing waves can fool the flow estimate.</li>
+        <li>Small creeks are often missing from OpenStreetMap; then the terrain estimate or Unverified applies.</li>
+        <li>Android compasses need the occasional figure-8 calibration and dislike nearby metal.</li>
+        <li>Public Overpass servers are sometimes overloaded. Save streams near you while you have signal.</li>
+        <li>On iOS, denying the motion prompt sticks until the site data is cleared.</li>
+      </ul>
+
+      <h3>Data sources</h3>
+      <ul class="help-list attributions">
+        <li>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL, via the Overpass API.</li>
+        <li>Elevation data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0), Copernicus DEM GLO-90.</li>
+        <li>Magnetic declination: NOAA/NCEI World Magnetic Model 2025.</li>
+        <li>Flow is measured on the phone. Nothing is uploaded unless you enable the scene check.</li>
+      </ul>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
