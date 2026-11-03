@@ -28,7 +28,9 @@ Permissions it asks for, and why:
 3. **Look it up.** The app asks OpenStreetMap (through the Overpass API) for waterways within 200 m, lakes within 60 m, and coastline within 300 m of your position. OSM draws rivers and streams in the direction of flow, so the nearest segment gives the expected bearing.
 4. **Judge.** Within 60° of the mapped flow: **RIGHT DIRECTION**. More than 120° off: **WRONG WAY**. In between: **SIDEWAYS**, which usually means the framing is off. With no mapped stream nearby, a coarse terrain-slope estimate (90 m elevation data) stands in. With no map data at all, the verdict is **UNVERIFIED**.
 
-Still water at a lake is exempt (lakes don't go anywhere). Still water where a stream is mapped is *suspiciously still*. Still water with nothing mapped is puddle-class water, also exempt. Tidal water is exempt because both directions are correct.
+Still water at a lake is exempt (lakes don't go anywhere). Still water where a stream is mapped is *suspiciously still*. Still water with nothing mapped is puddle-class water, also exempt. Tidal water is exempt because both directions are correct. Camera shake is judged relative to the water's own speed, so a fast river is not mistaken for a shaky hand, and at a lake or on the coast wind ripples count as exempt water rather than shake.
+
+Try it without a stream: the **demo** link on the home screen (or `?demo=1`) runs a synthetic creek with a fixture map. Add `?debug=1` for a panel of raw numbers.
 
 ## Optional: the Claude scene check
 
@@ -57,12 +59,13 @@ Measuring works offline. Judging needs the map. Before you head out, tap **Save 
 No build step. The site is the `docs/` folder.
 
 ```bash
-npm test          # unit tests (node --test)
-npm run e2e       # headless Chromium with a fake camera, routed map/model fixtures
-npm run serve     # local static server for docs/
+npm test            # 172 unit tests (node --test)
+npm run e2e:shell   # UI smoke suite in headless Chromium (demo mode, camera path, settings)
+npm run e2e         # 15 verdict scenarios: fake camera clips, routed map/elevation/model fixtures
+npm run serve       # local static server for docs/
 ```
 
-The end-to-end run generates synthetic flowing-water clips with `scripts/make-test-video.py` (numpy + ffmpeg) and launches Chromium with `--use-fake-device-for-media-stream`.
+The end-to-end run generates synthetic flowing-water clips with `scripts/make-test-video.py` (numpy + ffmpeg) and launches Chromium with `--use-fake-device-for-media-stream`. Set `E2E_URL=https://gvonmetzsch.github.io/stream-checker` to run the scenarios against the deployed site. Module interfaces are documented in `CONTRACTS.md`.
 
 ## Data and attributions
 
