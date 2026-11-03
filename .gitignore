@@ -1,0 +1,6 @@
+node_modules/
+tests/e2e/out/
+tests/fixtures/video/*.y4m
+tests/fixtures/video/*.mjpeg
+*.log
+.DS_Store

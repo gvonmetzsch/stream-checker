@@ -1,0 +1,14 @@
+{
+  "name": "stream-checker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Check whether a body of water is moving in the right direction. A joke app, built properly.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "e2e": "node tests/e2e/run.mjs",
+    "video": "python3 scripts/make-test-video.py",
+    "serve": "node tests/e2e/serve.mjs"
+  },
+  "license": "MIT"
+}
